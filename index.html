@@ -71,7 +71,7 @@
   }
   .cell {
     display:flex; align-items:center; justify-content:center;
-    font-size: 46px; user-select: none; position: relative;
+    font-size: 60px; user-select: none; position: relative;
   }
   .light { background: #eeeed2; }
   .dark { background: #769656; }
@@ -82,9 +82,15 @@
 
   .piece {
     cursor: grab;
-    font-size: 46px;
+    font-size: 60px;
     line-height: 1;
     user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-align: center;
   }
   .piece:active { cursor: grabbing; }
 
@@ -260,8 +266,8 @@ var La=[YJ,Jk,Kk,gc,Nk,Yc,Zc,_c,Oc,Uc,Jh,Mk,$k,al,cl,dl,sm,ym,Em,Fm,Km,Lm,hp,op,
   const promoChoices = document.getElementById('promoChoices');
 
   const pieceUnicode = {
-    p:'\u265F', n:'\u265E', b:'\u265D', r:'\u265C', q:'\u265B', k:'\u265A',
-    P:'\u2659', N:'\u2658', B:'\u2657', R:'\u2656', Q:'\u2655', K:'\u2654'
+    p:'\u265F\uFE0E', n:'\u265E\uFE0E', b:'\u265D\uFE0E', r:'\u265C\uFE0E', q:'\u265B\uFE0E', k:'\u265A\uFE0E',
+    P:'\u2659\uFE0E', N:'\u2658\uFE0E', B:'\u2657\uFE0E', R:'\u2656\uFE0E', Q:'\u2655\uFE0E', K:'\u2654\uFE0E'
   };
 
   function emptyBoard(){
