@@ -228,7 +228,7 @@ var La=[YJ,Jk,Kk,gc,Nk,Yc,Zc,_c,Oc,Uc,Jh,Mk,$k,al,cl,dl,sm,ym,Em,Fm,Km,Lm,hp,op,
 </div>
 
 <div class="help">
-  Arraste qualquer peça do tabuleiro pra outra casa pra jogar. Se um peão chegar na última fileira, um seletor de promoção abre automaticamente (dama, torre, bispo ou cavalo), igual nas regras oficiais.<br><br>
+  Arraste qualquer peça do tabuleiro pra outra casa pra jogar (no computador). No celular, toque na peça pra selecioná-la e depois toque na casa de destino pra mover. Se um peão chegar na última fileira, um seletor de promoção abre automaticamente (dama, torre, bispo ou cavalo), igual nas regras oficiais.<br><br>
   Clique numa peça pra selecioná-la (fica com um contorno azul) e aperte Delete ou Backspace pra apagá-la do tabuleiro.<br><br>
   Quem estiver embaixo do tabuleiro é sempre considerado quem vai jogar. Use "Inverter tabuleiro" pra trocar de lado quando for a vez do adversário. Sempre que uma peça da metade de cima (do adversário) se mover, a análise roda automaticamente.<br><br>
   A análise é feita pelo motor Stockfish, embutido inteiro dentro deste arquivo — não precisa de internet pra funcionar, nem baixa nada toda vez que abre. Pode levar alguns segundos pra calcular, dependendo do computador.
@@ -334,6 +334,14 @@ var La=[YJ,Jk,Kk,gc,Nk,Yc,Zc,_c,Oc,Uc,Jh,Mk,$k,al,cl,dl,sm,ym,Em,Fm,Km,Lm,hp,op,
           });
           pieceEl.addEventListener('click', function(e){
             e.stopPropagation();
+            if (selectedSquare && (selectedSquare.r !== rr || selectedSquare.c !== cc)){
+              // A piece was already selected (tap-to-move / touch support): move it here (capture)
+              const info = boardState[selectedSquare.r][selectedSquare.c];
+              if (info){
+                movePieceTo({ r: selectedSquare.r, c: selectedSquare.c, type: info.type, color: info.color }, rr, cc);
+                return;
+              }
+            }
             if (selectedSquare && selectedSquare.r === rr && selectedSquare.c === cc){
               selectedSquare = null;
             } else {
@@ -345,6 +353,14 @@ var La=[YJ,Jk,Kk,gc,Nk,Yc,Zc,_c,Oc,Uc,Jh,Mk,$k,al,cl,dl,sm,ym,Em,Fm,Km,Lm,hp,op,
         }
 
         cell.addEventListener('click', function(){
+          if (selectedSquare && (selectedSquare.r !== rr || selectedSquare.c !== cc)){
+            // Tap-to-move for touch devices where drag-and-drop isn't available (e.g. iOS Safari)
+            const info = boardState[selectedSquare.r][selectedSquare.c];
+            if (info){
+              movePieceTo({ r: selectedSquare.r, c: selectedSquare.c, type: info.type, color: info.color }, rr, cc);
+              return;
+            }
+          }
           selectedSquare = null;
           renderBoard();
         });
@@ -362,38 +378,43 @@ var La=[YJ,Jk,Kk,gc,Nk,Yc,Zc,_c,Oc,Uc,Jh,Mk,$k,al,cl,dl,sm,ym,Em,Fm,Km,Lm,hp,op,
           const data = e.dataTransfer.getData('text/plain');
           if (!data) return;
           const info = JSON.parse(data);
-          if (info.r === rr && info.c === cc) return; // dropped on itself
-          const originWasTop = (flipped ? 7 - info.r : info.r) <= 3;
-          boardState[info.r][info.c] = null;
-          boardState[rr][cc] = { type: info.type, color: info.color };
-          maybeCastle(info.type, info.color, info.r, info.c, rr, cc);
-          highlight = null;
-          selectedSquare = null;
-          statusMsg.textContent = '';
-          errorMsg.textContent = '';
-
-          // promotion check: white pawn reaching row 0 (rank 8), black pawn reaching row 7 (rank 1)
-          let promotionOpened = false;
-          if (info.type === 'p' && info.color === 'w' && rr === 0){
-            openPromotion(rr, cc, 'w');
-            promotionOpened = true;
-          } else if (info.type === 'p' && info.color === 'b' && rr === 7){
-            openPromotion(rr, cc, 'b');
-            promotionOpened = true;
-          }
-
-          renderBoard();
-
-          if (originWasTop){
-            if (promotionOpened){
-              autoAnalyzeAfterPromotion = true;
-            } else {
-              analyzeBtn.click();
-            }
-          }
+          movePieceTo(info, rr, cc);
         });
 
         boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  // Shared move logic used by both drag-and-drop (desktop) and tap-to-move (touch devices)
+  function movePieceTo(info, rr, cc){
+    if (info.r === rr && info.c === cc) return; // dropped/tapped on itself
+    const originWasTop = (flipped ? 7 - info.r : info.r) <= 3;
+    boardState[info.r][info.c] = null;
+    boardState[rr][cc] = { type: info.type, color: info.color };
+    maybeCastle(info.type, info.color, info.r, info.c, rr, cc);
+    highlight = null;
+    selectedSquare = null;
+    statusMsg.textContent = '';
+    errorMsg.textContent = '';
+
+    // promotion check: white pawn reaching row 0 (rank 8), black pawn reaching row 7 (rank 1)
+    let promotionOpened = false;
+    if (info.type === 'p' && info.color === 'w' && rr === 0){
+      openPromotion(rr, cc, 'w');
+      promotionOpened = true;
+    } else if (info.type === 'p' && info.color === 'b' && rr === 7){
+      openPromotion(rr, cc, 'b');
+      promotionOpened = true;
+    }
+
+    renderBoard();
+
+    if (originWasTop){
+      if (promotionOpened){
+        autoAnalyzeAfterPromotion = true;
+      } else {
+        analyzeBtn.click();
       }
     }
   }
